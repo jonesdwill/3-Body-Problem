@@ -1,3 +1,18 @@
+"""
+N-Body Numerical Integration Schemes and Solvers
+
+This module provides multiple numerical integration schemes for N-body simulations,
+including Euler, Euler-Cromer, Leapfrog, Forest-Ruth, PEFRL, Optimised Forest-Ruth, and RK4.
+It also provides functions to run simulations using these schemes or using SciPy's ODE integrator.
+
+Dependencies
+------------
+- numpy
+- scipy
+- functions.py (providing dv_dt, dr_dt, TotalEnergy, AngMomentum, CentreOfMass, vec_to_w, w_to_vec, all_derivatives)
+- time
+"""
+
 import numpy as np
 import scipy as sci
 import scipy.integrate
@@ -9,47 +24,57 @@ import time
 # ============================
 
 def EulerStep(r0s, v0s, h, G, masses):
-    '''
-    One step of forward Euler method
-    
-    input: - r0s: starting positions of all particles
-           - v0s: starting velocity of all particles
-           - h: size of timestep
-           
-    output: - r1s: new position after one step 
-            - v1s: new velocities after one step 
-    '''
+    """
+    Perform a single forward Euler integration step.
+
+    Parameters
+    ----------
+    r0s : ndarray. Initial positions of all particles (N x 3).
+    v0s : ndarray. Initial velocities of all particles (N x 3).
+    h : float. Timestep.
+    G : float. Gravitational constant.
+    masses : ndarray. Masses of all particles.
+
+    Returns
+    -------
+    r1s : ndarray. Updated positions after one step.
+    v1s : ndarray. Updated velocities after one step.
+    """
+
     r1s = r0s + h * dr_dt(v0s) 
     v1s = v0s + h * dv_dt(r0s, G, masses)
     
     return r1s, v1s
 
 def EulerCromerStep(r0s, v0s, h, G, masses):
-    '''
-    One step of the symplectic Euler-Cromer method
-    
-    input: - r0s: starting positions of all particles
-           - v0s: starting velocity of all particles
-           - h: size of timestep
-           
-    output: - r1s: new position after one step 
-            - v1s: new velocities after one step 
-    '''
+    """
+    Perform a single symplectic Euler-Cromer step.
+
+    Parameters
+    ----------
+    Same as EulerStep
+
+    Returns
+    -------
+    r1s, v1s : ndarray. Updated positions and velocities.
+    """
+
     r1s = r0s + h * dr_dt(v0s)
     v1s = v0s + h * dv_dt(r1s, G, masses)
     return r1s, v1s
 
 def LeapfrogStep(r0s, v0s, h, G, masses):
-    '''
-    One step of the standard leapfrog method
-    
-    input: - r0s: starting positions of all particles
-           - v0s: starting velocity of all particles
-           - h: size of timestep
-           
-    output: - r1s: new position after one step 
-            - v1s: new velocities after one step 
-    '''
+    """
+    Perform a single standard Leapfrog integration step.
+
+    Parameters
+    ----------
+    Same as EulerStep
+
+    Returns
+    -------
+    r1s, v1s : ndarray. Updated positions and velocities.
+    """
         
     vs_half = v0s + 0.5 * dv_dt(r0s, G, masses) * h 
     r1s = r0s + vs_half * h 
@@ -57,6 +82,18 @@ def LeapfrogStep(r0s, v0s, h, G, masses):
     return r1s, v1s
 
 def ForestRuthStep(r0s, v0s, h, G, masses):
+    """
+    Perform a single Forest-Ruth fourth-order symplectic integration step.
+
+    Parameters
+    ----------
+    Same as EulerStep
+
+    Returns
+    -------
+    r1s, v1s : ndarray. Updated positions and velocities.
+    """
+
     theta = 1/ (2 - (2 ** (1/3)))
     
     r1s = r0s + theta * h * 0.5 * dr_dt(v0s)
@@ -74,6 +111,18 @@ def ForestRuthStep(r0s, v0s, h, G, masses):
     return r4s, v4s
 
 def PEFRLStep(r0s, v0s, h, G, masses):
+    """
+    Perform a single PEFRL symplectic integration step (Position Extended Forest-Ruth-Like).
+
+    Parameters
+    ----------
+    Same as EulerStep
+
+    Returns
+    -------
+    r1s, v1s : ndarray. Updated positions and velocities.
+    """
+
     p = + 0.1786178958448091E+00
     l = - 0.2123418310626054E+00
     c = - 0.6626458266981849E-01
@@ -92,6 +141,18 @@ def PEFRLStep(r0s, v0s, h, G, masses):
     return r5s, v5s
 
 def Optimised_FR_Step(r0s, v0s, h, G, masses):
+    """
+    Perform a single optimized Forest-Ruth-like symplectic step.
+
+    Parameters
+    ----------
+    Same as EulerStep
+
+    Returns
+    -------
+    r1s, v1s : ndarray. Updated positions and velocities.
+    """
+
     p = + 0.1786178958448091E+00
     l = - 0.2123418310626054E+00
     c = - 0.6626458266981849E-01
@@ -112,16 +173,17 @@ def Optimised_FR_Step(r0s, v0s, h, G, masses):
     
 
 def RK4Step(r0s, v0s, h, G, masses):
-    '''
-    One step of the standard fourth order Runge-Kutta method
-    
-    input: - r0s: starting positions of all particles
-           - v0s: starting velocity of all particles
-           - h: size of timestep
-           
-    output: - r1s: new position after one step 
-            - v1s: new velocities after one step 
-    '''
+    """
+    Perform a single classical fourth-order Runge-Kutta integration step.
+
+    Parameters
+    ----------
+    Same as EulerStep
+
+    Returns
+    -------
+    r1s, v1s : ndarray. Updated positions and velocities.
+    """
         
     # transform to one long vector 
     w0 = vec_to_w(r0s, v0s)
@@ -142,24 +204,31 @@ def RK4Step(r0s, v0s, h, G, masses):
 # ============================
 
 def run_scheme(scheme, t0, T, h, r0s, v0s, G, masses):
-    '''
-    Evolution of the n-body problem using a numerical scheme.
-    
-    input: - scheme: numerical scheme to use
-           - t0:     starting time
-           - T:      time period 
-           - h:      timestep
-           - r0s:    starting position of each particle 
-           - v0s:    starting velocity of each particle 
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - t_vals:  list of time values
-            - rs_traj: trajectory of positions of each particle 
-            - vs_traj: trajectory of velocity of each particle 
-            - E_traj: trajectory of energy of each particle 
-            - am_traj: trajectory of angular momentum of each particle 
-    '''
+    """
+    Run an N-body simulation using a specified numerical scheme.
+
+    Parameters
+    ----------
+    scheme : function. Integration function to use (e.g., EulerStep, LeapfrogStep).
+    t0 : float. Initial time.
+    T : float. Final time.
+    h : float. Timestep.
+    r0s : ndarray. Initial positions of all particles.
+    v0s : ndarray. Initial velocities of all particles.
+    G : float. Gravitational constant.
+    masses : ndarray. Masses of all particles.
+
+    Returns
+    -------
+    trajectories : tuple
+        (t_vals, rs_traj, vs_traj, E_traj, am_traj, times)
+        - t_vals : array of times
+        - rs_traj : array of positions over time
+        - vs_traj : array of velocities over time
+        - E_traj : array of total energy over time
+        - am_traj : array of angular momentum over time
+        - times : float, total computation time
+    """
     
     # reposition centre of mass to origin with no momentum 
     rcom, vcom = CentreOfMass(r0s, v0s, masses)
@@ -213,24 +282,17 @@ def run_scheme(scheme, t0, T, h, r0s, v0s, G, masses):
 
 
 def run_scipy(t0, T, h, r0s, v0s, G, masses):
-    '''
-    Integrate trajectories from initial conditions using scipy.
-    
-    input: - t0:     starting time
-           - T:      time period 
-           - h:      timestep
-           - r0s:    starting position of each particle 
-           - v0s:    starting velocity of each particle 
-           - G:      gravitational constant
-           - masses: mass of each particle     
-           
-    output: - t_vals:  list of time values
-            - rs_traj: trajectory of positions of each particle 
-            - vs_traj: trajectory of velocity of each particle 
-            - ke_traj: trajectory of kinetic energy of each particle 
-            - pe_traj: trajectory of potential energy of each particle 
-            - am_traj: trajectory of angular momentum of each particle 
-    '''
+    """
+    Run an N-body simulation using SciPy's ODE integrator (odeint).
+
+    Parameters
+    ----------
+    Same as run_scheme()
+
+    Returns
+    -------
+    trajectories : tuple. Same as run_scheme()
+    """
     
     # reposition centre of mass to origin with no momentum 
     rcom, vcom = CentreOfMass(r0s, v0s, masses)

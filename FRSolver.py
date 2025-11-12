@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from functions import *
 from schemes import *
-from plot import * 
+from plot import *
 from Kepler import *
 from adaptive import *
 

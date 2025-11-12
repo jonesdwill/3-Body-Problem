@@ -1,3 +1,10 @@
+"""
+N-Body Problem Governing Equations
+
+This module provides functions to compute forces, energies, angular momentum,
+and to manage positions and velocities for a system of N gravitating bodies.
+"""
+
 import numpy as np
 
 # ============================
@@ -5,16 +12,20 @@ import numpy as np
 # ============================
 
 def Force_i(rs, i, G, masses):
-    '''
-    Total force acting on particle i, due to mass of other particles.
-    
-    input: - rs:     position of each particle
-           - i:      particle to find force on
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - F_i: total force acting on particle i, as a 3D vector
-    '''
+    """
+    Compute total gravitational force on particle i due to all other particles.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of all particles.
+    i : int. Index of the particle to compute the force on.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of all particles.
+
+    Returns
+    -------
+    F_i : ndarray, shape (3,). Total force acting on particle i.
+    """
     
     ri = rs[i] # get position of i-th mass 
     F_i = np.zeros(ri.shape) # create empty force vector for i-th mass 
@@ -30,15 +41,19 @@ def Force_i(rs, i, G, masses):
     return F_i
 
 def Force(rs, G, masses):
-    '''
-    Finds force acting on each particle
-    
-    input: - rs:     position of each particle
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - Fs: 3D forces acting on each particle
-    '''
+    """
+    Compute gravitational forces on particles.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of all particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of all particles.
+
+    Returns
+    -------
+    Fs : ndarray, shape (N, 3). Forces on each particle.
+    """
     
     N = len(rs)
 
@@ -55,11 +70,24 @@ def Force(rs, G, masses):
     return G * Fs
 
 def dr_dt(vs):
-    '''Returns the r-derivative of all particles'''
+    """ Compute derivative of positions (velocity) for all particles. """
     return vs
 
 def dv_dt(rs, G, masses):
-    '''Returns the second r-derivative (acceleration) of all particles, from F = ma'''
+    """
+    Compute acceleration of each particle due to gravitational forces.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of all particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of all particles.
+
+    Returns
+    -------
+    dvdt : ndarray, shape (N, 3). Accelerations of each particle.
+    """
+
     N = len(rs)
 
     Fs = np.zeros_like(rs).astype('float64') # empty vector of forces 
@@ -74,26 +102,30 @@ def dv_dt(rs, G, masses):
     return G * Fs
 
 def w_to_vec(w):
-    ''' Transforms flat 1D vector to position and velocity vectors'''
+    """ Convert a flat 1D vector to position and velocity arrays. """
     W = np.reshape(w, (len(w) // 3, 3))
     rs, vs = np.split(W, 2) 
     return rs, vs
 
 def vec_to_w(rs, vs):
-    ''' Transforms positions and velocities to a flat 1D vector'''
+    """ Flatten positions and velocities into a single 1D vector. """
     return np.concatenate((rs.flatten(), vs.flatten()))
     
 def all_derivatives(w, t, G, masses):
-    '''
-    Finds derivative, in every cardinal direction, of position and velocity of each particle
-    
-    input: - w:      flattened list of positions and velocities of each mass
-           - t:      time
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: flattened gradient of position and velocity
-    '''
+    """
+    Compute time derivatives of positions and velocities for all particles.
+
+    Parameters
+    ----------
+    w : ndarray, shape (2*N*3,). Flattened positions and velocities.
+    t : float. Current time (unused in Newtonian gravity).
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of all particles.
+
+    Returns
+    -------
+    derivs : ndarray, shape (2*N*3,). Flattened derivatives of positions and velocities.
+    """
  
     rs, vs = w_to_vec(w) # separate positions and velocities
     
@@ -106,34 +138,42 @@ def all_derivatives(w, t, G, masses):
     return derivs
 
 # ============================
-#         Reposition 
+#         Re-position
 # ============================
 
 def CentreOfMass(rs, vs, masses):
-    '''
-    Position and centre of mass of system 
-    
-    input: - rs:     position of each particle
-           - vs:     velocity of each particle 
-           - masses: mass of each particle      
-           
-    output: - rcom: position of centre of mass
-            - vcom: velocity of centre of mass
-    '''
+    """
+    Compute center of mass position and velocity of the system.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    rcom : ndarray, shape (3,). Position of center of mass.
+    vcom : ndarray, shape (3,). Velocity of center of mass.
+    """
     
     rcom = sum([rs[i] * masses[i] for i in range(len(masses))]) / np.sum(masses)
     vcom = sum([vs[i] * masses[i] for i in range(len(masses))]) / np.sum(masses)
     return rcom, vcom
 
 def Centralise(rs_traj, i):
-    '''
-    Position particle i at the centre of the system 
-    
-    input: - rs: position of each particle
-           - i:  particle to make centre  
-           
-    output: - rs: new position of each particle
-    '''
+    """
+    Reposition a given particle at the origin and shift all other particles accordingly.
+
+    Parameters
+    ----------
+    rs_traj : ndarray, shape (T, N, 3). Trajectory of all particle positions.
+    i : int. Index of the particle to centralise.
+
+    Returns
+    -------
+    rs_traj : ndarray, shape (T, N, 3). Adjusted trajectory with particle i at the origin.
+    """
     
     ri = np.copy(rs_traj[:,i,:])
     
@@ -147,57 +187,72 @@ def Centralise(rs_traj, i):
 # ============================
 
 def KE(vs, i, masses):
-    '''
-    Total kinetic energy of particle i. E_k = 1/2 * m * v^2
-    
-    input: - vs:     velocity of each particle
-           - i:      particle to find force on
-           - masses: mass of each particle      
-           
-    output: - ke: kinetic energy
-    '''
+    """
+    Compute kinetic energy of a single particle.
+
+    Parameters
+    ----------
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    i : int. Index of particle.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    ke : float. Kinetic energy of particle i.
+    """
         
     ke = 0.5 * masses[i] * np.linalg.norm(vs[i]) ** 2
     return ke
 
 def KineticEnergy(vs, masses):
-    '''
-    Total kinetic energy of each particle. E_k = 1/2 * m * v^2
-    
-    input: - vs:     velocity of each particle
-           - i:      particle to find force on
-           - masses: mass of each particle      
-           
-    output: - kes: kinetic energies
-    '''
+    """
+    Compute kinetic energy of each particle.
+
+    Parameters
+    ----------
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    kes : ndarray, shape (N,). Kinetic energy of each particle.
+    """
         
     ke = 0.5 * masses.T @ np.array([np.linalg.norm(v) ** 2  for v in vs])
     return ke
 
 def TotalKE(vs, masses):
-    '''
-    Total kinetic of system E_k = 1/2 * m * v^2
-    
-    input: - vs:     velocity of each particle
-           - i:      particle to find force on
-           - masses: mass of each particle      
-           
-    output: - kes: kinetic energies
-    '''
+    """
+    Compute total kinetic energy of the system.
+
+    Parameters
+    ----------
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    KE_total : float. Total kinetic energy of the system.
+    """
+
     ke = 0.5 * masses.T @ np.array([np.linalg.norm(v) ** 2  for v in vs])
     return ke
 
 def PE(rs, i, G, masses):
-    '''
-    Total potential energy of particle i. E_p = - ||F_i|| * ||r_i||
-    
-    input: - rs:     position of each particle
-           - i:      particle to find force on
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - pe: potential energy
-    '''
+    """
+    Compute potential energy of a single particle.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    i : int. Index of particle.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    pe : float. Potential energy of particle i.
+    """
 
     ri = rs[i]
     U = 0
@@ -210,15 +265,19 @@ def PE(rs, i, G, masses):
     return - G * U
 
 def PotentialEnergy(rs, G, masses):
-    '''
-    Total potential energy of each particle. E_p = - ||F_i|| * ||r_i||
-    
-    input: - rs:     position of each particle
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - pe: potential energy
-    '''
+    """
+    Compute potential energy of each particle.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of all particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    pes : ndarray, shape (N,). Potential energy of each particle.
+    """
 
     N = len(rs)
 
@@ -227,15 +286,19 @@ def PotentialEnergy(rs, G, masses):
     return pes / 2
 
 def TotalPE(rs, G, masses):
-    '''
-    Total potential energy of each particle. E_p = - ||F_i|| * ||r_i||
-    
-    input: - rs:     position of each particle
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - pe: potential energy
-    '''
+    """
+    Compute total potential energy of the system.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    U_total : float. Total potential energy.
+    """
 
     N = len(rs)
 
@@ -248,13 +311,18 @@ def TotalPE(rs, G, masses):
     return - G * U
 
 def RelativeEnergy(E_traj):
-    '''
-    Relative change in energy of the system over time, as a percentage of initial energy
-    
-    input: - E_traj: trajectory of kenergies of each particle
-           
-    output: - dE:      trajectory of relative energy difference from initial energy
-    '''
+    """
+    Compute relative change in total energy over time as a percentage.
+
+    Parameters
+    ----------
+    E_traj : ndarray, shape (T, N). Trajectory of particle energies over time.
+
+    Returns
+    -------
+    dE : ndarray, shape (T,). Relative energy error (%) compared to initial total energy.
+    """
+
     Et = np.sum(E_traj, axis = 1)
     E0 = Et[0] # initial energy 
     E0hat = E0 # scaling coefficient 
@@ -268,11 +336,41 @@ def RelativeEnergy(E_traj):
     return dE * 100
 
 def Energies(rs, vs, G, masses):
+    """
+    Compute total energy (kinetic + potential) of the system.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    E_total : ndarray, shape (N,). Total energy per particle.
+    """
+
     ke = KineticEnergy(vs, masses)
     pe = PotentialEnergy(rs, G, masses)
     return ke + pe
 
 def TotalEnergy(rs, vs, G, masses):
+    """
+    Compute total energy of the system.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    E_total : float. Total energy of the system.
+    """
+
     return TotalKE(vs, masses) + TotalPE(rs, G, masses)
 
 # ============================
@@ -280,41 +378,53 @@ def TotalEnergy(rs, vs, G, masses):
 # ============================
 
 def AM(rs, vs, i, masses):
-    '''
-    Angular momentum of particle i. l = r x v
-    
-    input: - rs:     position of each particle
-           - vs:     velocity of each particle
-           - i:      particle to find force on
-           - masses: mass of each particle      
-           
-    output: - l: angular momentum
-    '''
+    """
+    Compute angular momentum of a single particle.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    i : int. Index of particle.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    l : ndarray, shape (3,). Angular momentum vector of particle i.
+    """
     l = np.cross(rs[i], masses[i]*vs[i])
-    return l 
+    return l
 
 def AngMomentum(rs, vs, masses):
-    '''
-    Angular momentum of each particle. l = r x v
-    
-    input: - rs:     position of each particle
-           - vs:     velocity of each particle
-           - masses: mass of each particle      
-           
-    output: - L: angular momentums
-    '''
+    """
+    Compute angular momentum of all particles.
+
+    Parameters
+    ----------
+    rs : ndarray, shape (N, 3). Positions of particles.
+    vs : ndarray, shape (N, 3). Velocities of particles.
+    masses : ndarray, shape (N,). Masses of particles.
+
+    Returns
+    -------
+    L : ndarray, shape (N, 3). Angular momentum vectors of all particles.
+    """
         
     L = [AM(rs, vs, i, masses) for i in range(len(masses))]
     return np.array(L)
 
 def RelativeAngMomentum(am_traj):
-    '''
-    Relative change in angular momentum of the system over time
-    
-    input: - am_traj: trajectory of angular momentum of each particle
-           
-    output: - dL:      trajectory of change in angular momentum from initial angular momentum
-    '''
+    """
+    Compute relative change in total angular momentum over time (%).
+
+    Parameters
+    ----------
+    am_traj : ndarray, shape (T, N, 3). Trajectory of angular momenta for each particle.
+
+    Returns
+    -------
+    dL : ndarray, shape (T,). Relative angular momentum change (%) compared to initial value.
+    """
         
     Lt = np.sum(am_traj, axis = 1) # total angular momentum of the system
     L0 = Lt[0] # initial angular momentum

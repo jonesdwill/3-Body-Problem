@@ -1,3 +1,28 @@
+"""
+n-body Simulation and Adaptive Integrators Module
+
+This module provides numerical methods for simulating the dynamics of N-body
+gravitational systems. It includes:
+
+- Standard fixed-step schemes: Euler, Euler-Cromer, Leapfrog, Runge-Kutta 4, Forest-Ruth, PEFRL.
+- Adaptive timestep methods: RKF45, adaptive Leapfrog, and adaptive symplectic integrators.
+- Functions to compute forces, accelerations, energies, and angular momentum.
+- Utilities for center-of-mass correction and trajectory handling.
+- Kepler orbit functions for two-body comparisons.
+
+All functions are documented in NumPy/SciPy style.
+
+Dependencies
+------------
+numpy
+scipy
+
+Usage
+-----
+Import the module and call `run_scheme` or `run_adaptive_scheme` with the desired
+numerical scheme and initial conditions.
+"""
+
 import numpy as np
 import scipy as sci
 import scipy.integrate
@@ -9,6 +34,20 @@ import time
 # ============================
 
 def findh(rs, vs, h0 = np.inf):
+    """
+    Estimate a next timestep from pairwise relative speeds and separations.
+
+    Parameters
+    ----------
+    rs : array, shape (N, dim). Positions of N bodies.
+    vs : array, shape (N, dim). Velocities of N bodies.
+    h0 : float, optional upper bound for returned timestep (default: +inf).
+
+    Returns
+    -------
+    h : float
+    """
+
     h = h0
     N = len(rs)
     for i in range(N):
@@ -19,7 +58,30 @@ def findh(rs, vs, h0 = np.inf):
     return h
     
 def AdaptiveLeapfrog(t0, r0s, v0s, h0, G, masses, tolerance = 1e-3, safety_factor = 0.9, min_scale = 0.1, max_scale = 5):
-    
+    """
+    Perform a single adaptive timestep using the Leapfrog integrator.
+
+    Parameters
+    ----------
+    t0 : float. Current time.
+    r0s : ndarray, shape (N, 3). Positions of all particles at t0.
+    v0s : ndarray, shape (N, 3). Velocities of all particles at t0.
+    h0 : float. Current timestep.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+    tolerance : float, optional. Error tolerance (default: 1e-3).
+    safety_factor : float, optional. Scaling factor for timestep adaptation (default: 0.9).
+    min_scale : float, optional. Minimum allowed timestep scaling factor (default: 0.1).
+    max_scale : float, optional. Maximum allowed timestep scaling factor (default: 5).
+
+    Returns
+    -------
+    t1 : float. Updated time.
+    h1 : float. Next suggested timestep.
+    rs : ndarray, shape (N, 3). Updated positions.
+    vs : ndarray, shape (N, 3). Updated velocities.
+    """
+
     vs_half = v0s + 0.5 * dv_dt(r0s, G, masses) * h0
     r1s = r0s + vs_half * h0
     v1s = vs_half + 0.5 * dv_dt(r1s, G, masses) * h0
@@ -41,7 +103,30 @@ def AdaptiveLeapfrog(t0, r0s, v0s, h0, G, masses, tolerance = 1e-3, safety_facto
     return t1, h1, rs, vs
     
 def RKF45Step(t0, r0s, v0s, h0, G, masses, tolerance = 1e-6, safety_factor = 0.9, min_scale = 0.1, max_scale = 5):
-    
+    """
+    Perform a single timestep using the adaptive Runge-Kutta-Fehlberg 4(5) method.
+
+    Parameters
+    ----------
+    t0 : float. Current time.
+    r0s : ndarray, shape (N, 3). Positions of all particles at t0.
+    v0s : ndarray, shape (N, 3). Velocities of all particles at t0.
+    h0 : float. Current timestep.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+    tolerance : float, optional. Error tolerance for adaptive step (default: 1e-6).
+    safety_factor : float, optional. Scaling factor for timestep adaptation (default: 0.9).
+    min_scale : float, optional. Minimum allowed timestep scaling factor (default: 0.1).
+    max_scale : float, optional. Maximum allowed timestep scaling factor (default: 5).
+
+    Returns
+    -------
+    t1 : float. Updated time.
+    h1 : float. Next suggested timestep.
+    r1s : ndarray, shape (N, 3). Updated positions.
+    v1s : ndarray, shape (N, 3). Updated velocities.
+    """
+
     # butcher tablaeu for RKF45
     c = np.array([0, 1/4, 3/8, 12/13, 1, 1/2])
     A = np.array([[0, 0, 0, 0, 0, 0],
@@ -92,25 +177,31 @@ def RKF45Step(t0, r0s, v0s, h0, G, masses, tolerance = 1e-6, safety_factor = 0.9
     return t1, h1, r1s, v1s
 
 def run_adaptive_scheme(scheme, t0, T, h0, r0s, v0s, G, masses, tolerance = 1e-3):
-    '''
-    Evolution of the n-body problem using an adaptive numerical scheme.
-    
-    input: - scheme: numerical scheme to use
-           - t0:     starting time
-           - T:      time period 
-           - h:      initial timestep
-           - r0s:    starting position of each particle 
-           - v0s:    starting velocity of each particle 
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - t_vals:  list of time values
-            - rs_traj: trajectory of positions of each particle 
-            - vs_traj: trajectory of velocity of each particle 
-            - ke_traj: trajectory of kinetic energy of each particle 
-            - pe_traj: trajectory of potential energy of each particle 
-            - am_traj: trajectory of angular momentum of each particle 
-    '''
+    """
+    Integrate an n-body system using an adaptive timestep scheme.
+
+    Parameters
+    ----------
+    scheme : callable. Function implementing a single adaptive timestep (e.g., AdaptiveLeapfrog or RKF45Step).
+    t0 : float. Initial time.
+    T : float. Final integration time.
+    h0 : float. Initial timestep.
+    r0s : ndarray, shape (N, 3). Initial positions of particles.
+    v0s : ndarray, shape (N, 3). Initial velocities of particles.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+    tolerance : float, optional. Error tolerance for adaptive step (default: 1e-3).
+
+    Returns
+    -------
+    trajectories: tuple
+        - t_vals : list of floats. Times at which the solution was evaluated.
+        - rs_traj : ndarray, shape (M, N, 3). Trajectory of particle positions.
+        - vs_traj : ndarray, shape (M, N, 3). Trajectory of particle velocities.
+        - E_traj : ndarray, shape (M,). Total energy of the system over time.
+        - am_traj : ndarray, shape (M, N, 3). Angular momentum of particles over time.
+        - times : float. Cumulative CPU time spent integrating.
+    """
     
     # reposition centre of mass to origin with no momentum 
     rcom, vcom = CentreOfMass(r0s, v0s, masses)
@@ -160,25 +251,31 @@ def run_adaptive_scheme(scheme, t0, T, h0, r0s, v0s, G, masses, tolerance = 1e-3
 
 
 def run_adaptive(scheme, t0, T, h0, r0s, v0s, G, masses, scaleh = 0.005):
-    '''
-    Evolution of the n-body problem using an adaptive numerical scheme.
-    
-    input: - scheme: numerical scheme to use
-           - t0:     starting time
-           - T:      time period 
-           - h:      initial timestep
-           - r0s:    starting position of each particle 
-           - v0s:    starting velocity of each particle 
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - t_vals:  list of time values
-            - rs_traj: trajectory of positions of each particle 
-            - vs_traj: trajectory of velocity of each particle 
-            - ke_traj: trajectory of kinetic energy of each particle 
-            - pe_traj: trajectory of potential energy of each particle 
-            - am_traj: trajectory of angular momentum of each particle 
-    '''
+    """
+    Integrate an n-body system with a symplectic integrator and dynamically scaled timestep.
+
+    Parameters
+    ----------
+    scheme : callable. Symplectic numerical scheme function.
+    t0 : float. Initial time.
+    T : float. Final integration time.
+    h0 : float. Initial timestep.
+    r0s : ndarray, shape (N, 3). Initial positions.
+    v0s : ndarray, shape (N, 3). Initial velocities.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+    scaleh : float, optional. Scale factor for timestep adaptation (default: 0.005).
+
+    Returns
+    -------
+    trajectories: tuple
+        - t_vals : list of floats. Times at which the solution was evaluated.
+        - rs_traj : ndarray, shape (M, N, 3). Trajectory of particle positions.
+        - vs_traj : ndarray, shape (M, N, 3). Trajectory of particle velocities.
+        - E_traj : ndarray, shape (M,). Total energy of the system over time.
+        - am_traj : ndarray, shape (M, N, 3). Angular momentum of particles over time.
+        - times : float. Cumulative CPU time spent integrating.
+    """
     
     # reposition centre of mass to origin with no momentum 
     rcom, vcom = CentreOfMass(r0s, v0s, masses)
@@ -231,25 +328,31 @@ def run_adaptive(scheme, t0, T, h0, r0s, v0s, G, masses, scaleh = 0.005):
 
 
 def run_adaptive_symplectic(scheme, t0, T, h0, r0s, v0s, G, masses, scaleh = 0.005):
-    '''
-    Evolution of the n-body problem using an adaptive numerical scheme.
-    
-    input: - scheme: numerical scheme to use
-           - t0:     starting time
-           - T:      time period 
-           - h:      initial timestep
-           - r0s:    starting position of each particle 
-           - v0s:    starting velocity of each particle 
-           - G:      gravitational constant
-           - masses: mass of each particle      
-           
-    output: - t_vals:  list of time values
-            - rs_traj: trajectory of positions of each particle 
-            - vs_traj: trajectory of velocity of each particle 
-            - ke_traj: trajectory of kinetic energy of each particle 
-            - pe_traj: trajectory of potential energy of each particle 
-            - am_traj: trajectory of angular momentum of each particle 
-    '''
+    """
+    Integrate an n-body system with a symplectic integrator using adaptive timestep averaging.
+
+    Parameters
+    ----------
+    scheme : callable. Symplectic numerical scheme function.
+    t0 : float. Initial time.
+    T : float. Final integration time.
+    h0 : float. Initial timestep.
+    r0s : ndarray, shape (N, 3). Initial positions.
+    v0s : ndarray, shape (N, 3). Initial velocities.
+    G : float. Gravitational constant.
+    masses : ndarray, shape (N,). Masses of particles.
+    scaleh : float, optional. Scale factor for timestep adaptation (default: 0.005).
+
+    Returns
+    -------
+    trajectories: tuple
+        - t_vals : list of floats. Times at which the solution was evaluated.
+        - rs_traj : ndarray, shape (M, N, 3). Trajectory of particle positions.
+        - vs_traj : ndarray, shape (M, N, 3). Trajectory of particle velocities.
+        - E_traj : ndarray, shape (M,). Total energy of the system over time.
+        - am_traj : ndarray, shape (M, N, 3). Angular momentum of particles over time.
+        - times : float. Cumulative CPU time spent integrating.
+    """
     
     # reposition centre of mass to origin with no momentum 
     rcom, vcom = CentreOfMass(r0s, v0s, masses)

@@ -1,23 +1,41 @@
+"""
+Plot N-body simulations.
+
+This module provides functions to visualize:
+- 2D trajectories of 2 or 3-body systems
+- Energy and angular momentum diagnostics
+- Single trajectory paths or errors
+
+Dependencies:
+- numpy
+- matplotlib
+- functions.py (for RelativeEnergy, RelativeAngMomentum, CentreOfMass, etc.)
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from functions import * 
-
-# ============================
-#        Plot in 2D
-# ============================
+from functions import *
 
 def plot2D(trajectories, masses, scheme='', style = 'default', COM = True):
-    '''
-    Plot the orbits, energy and angular momentum of a system of N-bodies
-    
-    input: - t_vals:  list of time values
-           - rs_traj: trajectory of positions of each particle 
-           - vs_traj: trajectory of velocity of each particle 
-           - ke_traj: trajectory of kinetic energy of each particle 
-           - pe_traj: trajectory of potential energy of each particle 
-           - am_traj: trajectory of angular momentum of each particle
-    '''
+    """
+    Plot orbits, relative energy, and relative angular momentum of an N-body system in 2D.
+
+    Parameters
+    ----------
+    trajectories : tuple (t_traj, rs_traj, vs_traj, E_traj, am_traj, time)
+        - t_traj : list or array of time points
+        - rs_traj : ndarray of positions (time, bodies, dims)
+        - vs_traj : ndarray of velocities (time, bodies, dims)
+        - E_traj : ndarray of total energy over time
+        - am_traj : ndarray of angular momentum over time
+        - time : final simulation time
+    masses : array. Masses of the bodies
+    scheme : str, optional. Name of the integration scheme (default: '')
+    style : str, optional. Matplotlib plotting style (default: 'default')
+    COM : bool, optional. Whether to compute and plot the center of mass (default: True)
+    """
+
     t_traj, rs_traj, vs_traj, E_traj, am_traj, time = trajectories
     N = rs_traj.shape[1] # number of masses in the system
     colours = plt.cm.rainbow(np.linspace(0,1,N)) # colour according to how many masses
@@ -77,6 +95,15 @@ def plot2D(trajectories, masses, scheme='', style = 'default', COM = True):
     ax3.set_ylabel('Percentage error')
 
 def PlotOrbits(trajectories, figsize = (7,7)):
+    """
+    Plot only the 2D trajectories of the N-body system.
+
+    Parameters
+    ----------
+    trajectories : tuple. Same as in plot2D
+    figsize : tuple of int, optional. Figure size (default: (7,7))
+    """
+
     t_traj, rs_traj, vs_traj, E_traj, am_traj, time = trajectories
     N = rs_traj.shape[1] # number of masses in the system
 
@@ -114,6 +141,14 @@ def PlotOrbits(trajectories, figsize = (7,7)):
     plt.tight_layout()
 
 def PlotEnergy(trajectories):
+    """
+    Plot the relative energy error over time.
+
+    Parameters
+    ----------
+    trajectories : tuple. Same as in plot2D
+    """
+
     t_traj, rs_traj, vs_traj, E_traj, am_traj, time = trajectories
 
     ### ENERGY ###
@@ -130,6 +165,15 @@ def PlotEnergy(trajectories):
     plt.tight_layout()
 
 def PlotTotalEnergy(trajectories, figsize = (7,7)):
+    """
+    Plot the total energy over time.
+
+    Parameters
+    ----------
+    trajectories : tuple. Same as in plot2D
+    figsize : tuple of int, optional. Figure size (default: (7,7))
+    """
+
     t_traj, rs_traj, vs_traj, E_traj, am_traj, time = trajectories
 
     ### ENERGY ###
@@ -144,6 +188,14 @@ def PlotTotalEnergy(trajectories, figsize = (7,7)):
     plt.tight_layout()
 
 def PlotPath(path, figsize = (7,7)):
+    """
+    Plot a 2D path of a single trajectory.
+
+    Parameters
+    ----------
+    path : ndarray, shape (n_steps, 2). 2D positions over time
+    figsize : tuple of int, optional. Figure size (default: (7,7))
+    """
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     
@@ -157,6 +209,14 @@ def PlotPath(path, figsize = (7,7)):
 
 
 def PlotAngularMomentum(trajectories):
+    """
+    Plot the relative angular momentum error over time.
+
+    Parameters
+    ----------
+    trajectories : tuple. Same as in plot2D
+    """
+
     t_traj, rs_traj, vs_traj, E_traj, am_traj, time = trajectories
 
     ### ANGULAR MOMENTUM ###
@@ -173,6 +233,15 @@ def PlotAngularMomentum(trajectories):
     plt.tight_layout()
 
 def PlotError(err_traj, trajectory):
+    """
+    Plot a given error trajectory (e.g., numerical or energy error) over time.
+
+    Parameters
+    ----------
+    err_traj : array. Error values to plot
+    trajectory : tuple. Same as in plot2D.
+    """
+
     t_traj, rs_traj, vs_traj, E_traj, am_traj, time = trajectory
 
     ### ENERGY ###
