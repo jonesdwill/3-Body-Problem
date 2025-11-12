@@ -10,22 +10,81 @@
  of Euler and Lagrange’s solutions are accurately calculated. The implications of the results are
  discussed with reference to Celestial mechanics and the N-body problem
 
-# Framework
-This repo includes a framework for solving the 3-body problem up to time T, using a selection of candidate schemes. Most usefully, it includes a time-adaptive Symplective integrator based on the Forest-ruth algorithm, to solve a generalised N-body system.
 
-**functions.py** Governing equations, as well as primitives for Energy and Angular Momentum.
+# N-Body Simulation Framework
 
-**plot.py** Functions for plotting N-bodies. 
+This repository provides a framework for simulating the N-body problem. Simulations can be run up to time `T` using any one of a number of numerical integration schemes. 
 
-**schemes.py** Contains selection of candidate numerical integrators.
+Most useful is the time-adaptive **symplectic integrator** based on the Forest-Ruth algorithm, suitable for general N-body systems.
 
-**Kepler.py** Non-numerical solution to Kepler orbits (N=2). Useful for testing.
+## Modules
 
-**FRSolver.py** Solves the N-Body Equations using Forest-Ruth.
+- **`functions.py`**  
+  Governing equations for N-body dynamics. Includes functions for computing forces, accelerations, kinetic and potential energy, and angular momentum.
 
-**adaptive.py** Solves the N-Body Equations using a time-adaptive Forest-Ruth. 
+- **`plot.py`**  
+  Visualization functions for plotting trajectories, energies, and angular momentum of N-body systems in 2D.
 
-Please Note: This project is designed for my Master's thesis, and not as a well-interpretable package. As a result, many of the notebooks and Scripts have not been optimised, have redundant functionality, and serve to document progression. 
+- **`schemes.py`**  
+  Implements candidate numerical integrators:  
+  Euler, Euler-Cromer, Leapfrog, Runge-Kutta 4, Forest-Ruth, PEFRL, and an optimized Forest-Ruth variant.
+
+- **`Kepler.py`**  
+  Analytic solution for 2-body (Kepler) orbits. Useful for validating numerical schemes.
+
+- **`FRSolver.py`**  
+  Solves the N-body equations using the fixed-step Forest-Ruth method.
+
+- **`adaptive.py`**  
+  Implements time-adaptive integration schemes, including adaptive symplectic methods and RKF45.
+
+## Notes 
+This project is designed for my Master's thesis, and not as a well-interpretable, robust package. As a result, many of the notebooks and Scripts have not been optimised, have redundant functionality, and serve to document progression. 
+
+# Quickstart Example
+Try running this code in a notebook **`example.ipynb`**: 
+```python
+from FRSolver import *
+
+# Example: 3-body system
+# gravity
+G = 1
+
+# masses
+m1 = 1
+m2 = 1
+m3 = 1
+masses = np.array([m1, m2, m3])
+
+# position
+r1 = np.array([0,0.0,0.0], dtype="float64")
+r2 = np.array([1,0.0,0.0], dtype="float64")
+r3 = np.array([-1,0.0,0.0], dtype="float64")
+
+# initial momentum
+p1 = 0.347111
+p2 = 0.532728
+
+# velocity
+v1 = np.array([-2 * p1,-2*p2,0], dtype="float64")
+v2 = np.array([p1,p2,0], dtype="float64")
+v3 = np.array([p1,p2,0], dtype="float64")
+
+# create initial vectors
+r0s = np.array([r1,r2,r3])
+v0s = np.array([v1,v2,v3])
+
+T = 1000
+C = 0.5
+
+# Run simulation using Forest-Ruth integrator
+traj, stability = fullSolver(T, C, r0s, v0s, G, masses)
+
+# Plot trajectories and energy/AM evolution
+PlotOrbits(traj)
+```
+
+![Alt Text](example.png)
 
 # Report
 A write-up and full list of citations are found in the pdf '[Stability of Selective Solutions to the 3-Body Problem.pdf](Stability%20of%20Selective%20Solutions%20to%20the%203-Body%20Problem.pdf)'.
