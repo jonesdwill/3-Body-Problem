@@ -15,7 +15,7 @@ This repo includes a framework for solving the 3-body problem up to time T, usin
 
 **functions.py** Governing equations, as well as primitives for Energy and Angular Momentum.
 
-**plot.py** Utilities for plotting N-bodies. 
+**plot.py** Functions for plotting N-bodies. 
 
 **schemes.py** Contains selection of candidate numerical integrators.
 
@@ -28,4 +28,12 @@ This repo includes a framework for solving the 3-body problem up to time T, usin
 Please Note: This project is designed for my Master's thesis, and not as a well-interpretable package. As a result, many of the notebooks and Scripts have not been optimised, have redundant functionality, and serve to document progression. 
 
 # Report
-A write-up and citations are found in the pdf '[Stability of Selective Solutions to the 3-Body Problem.pdf](Stability%20of%20Selective%20Solutions%20to%20the%203-Body%20Problem.pdf)'.
+A write-up and full list of citations are found in the pdf '[Stability of Selective Solutions to the 3-Body Problem.pdf](Stability%20of%20Selective%20Solutions%20to%20the%203-Body%20Problem.pdf)'.
+
+# References
+- Chenciner, A.; Montgomery, R. “A remarkable periodic solution of the three-body problem in the case of equal masses.” *Annals of Mathematics* **152**, 881–901 (2000).  
+- Euler, L. “De motu rectilineo trium corporum se mutuo attrahentium.” *Commentarii academiae scientiarum Petropolitanae* (1767).  
+- Lagrange, J.L. “Essai sur le problème des trois corps.” *Oeuvres* (1772).  
+- Simo, C. “Dynamical properties of the figure-eight solution of the three-body problem.” *Celestial Mechanics and Dynamical Astronomy* **55**, 127–147 (1993).  
+- Forest, E.; Ruth, R.D. “Fourth-order symplectic integration.” *Physica D* **43**, 105–117 (1990).  
+- Diacu, F. “Relative equilibria of the three-body problem.” *Celestial Mechanics and Dynamical Astronomy* **63**, 1–20 (1995).  
